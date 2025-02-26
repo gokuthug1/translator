@@ -1,11 +1,11 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Language Translator</title>
-    <style>
-        :root {
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Language Translator</title>
+  <style>
+     :root {
             --primary-color: #356aff;
             --bg-color: #f7f7f7;
             --light-bg-color: #ffffff;
@@ -164,209 +164,228 @@
                 border-right: none;
             }
         }
-    </style>
+    button {
+      display: none; /* Hide the button if not needed */
+    }
+  </style>
 </head>
 <body>
-    <div class="container">
-        <!-- Input Card -->
-        <div class="card">
-            <div class="heading">From:</div>
-            <div class="search-container" id="input-language">
-                <div class="search-box">
-                    <input type="text" id="input-search" placeholder="Search for language..." />
-                </div>
-                <ul class="search-results" id="input-results"></ul>
-            </div>
-            <textarea id="input-text" placeholder="Enter text here..."></textarea>
+  <div class="container">
+    <!-- Input Card -->
+    <div class="card">
+      <div class="heading">From:</div>
+      <div class="search-container" id="input-language">
+        <div class="search-box">
+          <input type="text" id="input-search" placeholder="Search for language..." />
         </div>
-
-        <!-- Output Card -->
-        <div class="card">
-            <div class="heading">To:</div>
-            <div class="search-container" id="output-language">
-                <div class="search-box">
-                    <input type="text" id="output-search" placeholder="Search for language..." />
-                </div>
-                <ul class="search-results" id="output-results"></ul>
-            </div>
-            <textarea id="output-text" placeholder="Translated text will appear here" disabled></textarea>
-            <button id="translate-btn" disabled>Translate</button>
-        </div>
+        <ul class="search-results" id="input-results"></ul>
+      </div>
+      <textarea id="input-text" placeholder="Enter text here..."></textarea>
     </div>
 
-    <script>
-        const languages = [
-    { name: "Auto Detect", code: "auto" },
-    { name: "English", code: "en" },
-    { name: "Spanish", code: "es" },
-    { name: "French", code: "fr" },
-    { name: "German", code: "de" },
-    { name: "Chinese (Simplified)", code: "zh-CN" },
-    { name: "Chinese (Traditional)", code: "zh-TW" },
-    { name: "Hindi", code: "hi" },
-    { name: "Arabic", code: "ar" },
-    { name: "Portuguese", code: "pt" },
-    { name: "Russian", code: "ru" },
-    { name: "Japanese", code: "ja" },
-    { name: "Italian", code: "it" },
-    { name: "Korean", code: "ko" },
-    { name: "Turkish", code: "tr" },
-    { name: "Dutch", code: "nl" },
-    { name: "Polish", code: "pl" },
-    { name: "Ukrainian", code: "uk" },
-    { name: "Romanian", code: "ro" },
-    { name: "Greek", code: "el" },
-    { name: "Czech", code: "cs" },
-    { name: "Swedish", code: "sv" },
-    { name: "Hungarian", code: "hu" },
-    { name: "Finnish", code: "fi" },
-    { name: "Danish", code: "da" },
-    { name: "Norwegian", code: "no" },
-    { name: "Vietnamese", code: "vi" },
-    { name: "Thai", code: "th" },
-    { name: "Hebrew", code: "he" },
-    { name: "Bengali", code: "bn" },
-    { name: "Malay", code: "ms" },
-    { name: "Malayalam", code: "ml" },
-    { name: "Tamil", code: "ta" },
-    { name: "Telugu", code: "te" },
-    { name: "Gujarati", code: "gu" },
-    { name: "Punjabi", code: "pa" },
-    { name: "Marathi", code: "mr" },
-    { name: "Slovak", code: "sk" },
-    { name: "Catalan", code: "ca" },
-    { name: "Bulgarian", code: "bg" },
-    { name: "Croatian", code: "hr" },
-    { name: "Serbian", code: "sr" },
-    { name: "Bosnian", code: "bs" },
-    { name: "Estonian", code: "et" },
-    { name: "Latvian", code: "lv" },
-    { name: "Lithuanian", code: "lt" },
-    { name: "Macedonian", code: "mk" },
-    { name: "Basque", code: "eu" },
-    { name: "Galician", code: "gl" },
-    { name: "Icelandic", code: "is" },
-    { name: "Irish", code: "ga" },
-    { name: "Welsh", code: "cy" },
-    { name: "Albanian", code: "sq" },
-    { name: "Georgian", code: "ka" },
-    { name: "Armenian", code: "hy" },
-    { name: "Azerbaijani", code: "az" },
-    { name: "Kazakh", code: "kk" },
-    { name: "Uzbek", code: "uz" },
-    { name: "Turkmen", code: "tk" },
-    { name: "Tajik", code: "tg" },
-    { name: "Mongolian", code: "mn" },
-    { name: "Pushto", code: "ps" },
-    { name: "Nepali", code: "ne" },
-    { name: "Khmer", code: "km" },
-    { name: "Lao", code: "lo" },
-    { name: "Sinhalese", code: "si" },
-    { name: "Haitian Creole", code: "ht" },
-    { name: "Swahili", code: "sw" },
-    { name: "Zulu", code: "zu" },
-    { name: "Afrikaans", code: "af" },
-    { name: "Yiddish", code: "yi" },
-    { name: "Esperanto", code: "eo" },
-    { name: "Sesotho", code: "st" },
-    { name: "Tigrinya", code: "ti" },
-    { name: "Somali", code: "so" },
-    { name: "Maltese", code: "mt" },
-    { name: "Hmong", code: "hmn" },
-    { name: "Twi", code: "ak" },
-    { name: "Burmese", code: "my" },
-    { name: "Finnish", code: "fi" },
-    { name: "Chinese (Hong Kong)", code: "zh-HK" },
-    { name: "Bashkir", code: "ba" },
-    { name: "Tatar", code: "tt" },
-    { name: "Hausa", code: "ha" },
-    { name: "Javanese", code: "jv" },
-    { name: "Quechua", code: "qu" },
-    { name: "Mayan languages", code: "yua" }
-];
+    <!-- Output Card -->
+    <div class="card">
+      <div class="heading">To:</div>
+      <div class="search-container" id="output-language">
+        <div class="search-box">
+          <input type="text" id="output-search" placeholder="Search for language..." />
+        </div>
+        <ul class="search-results" id="output-results"></ul>
+      </div>
+      <textarea id="output-text" placeholder="Translated text will appear here" disabled></textarea>
+      <button id="translate-btn" disabled>Translate</button>
+    </div>
+  </div>
 
-        const inputSearch = document.getElementById("input-search");
-        const outputSearch = document.getElementById("output-search");
-        const inputResults = document.getElementById("input-results");
-        const outputResults = document.getElementById("output-results");
-        const inputTextElem = document.getElementById("input-text");
-        const outputTextElem = document.getElementById("output-text");
-        const translateButton = document.getElementById("translate-btn");
+  <script>
+    const languages = [
+      { name: "Auto Detect", code: "auto" },
+      { name: "English", code: "en" },
+      { name: "Spanish", code: "es" },
+      { name: "French", code: "fr" },
+      { name: "German", code: "de" },
+      { name: "Chinese (Simplified)", code: "zh-CN" },
+      { name: "Chinese (Traditional)", code: "zh-TW" },
+      { name: "Hindi", code: "hi" },
+      { name: "Arabic", code: "ar" },
+      { name: "Portuguese", code: "pt" },
+      { name: "Russian", code: "ru" },
+      { name: "Japanese", code: "ja" },
+      { name: "Italian", code: "it" },
+      { name: "Korean", code: "ko" },
+      { name: "Turkish", code: "tr" },
+      { name: "Dutch", code: "nl" },
+      { name: "Polish", code: "pl" },
+      { name: "Ukrainian", code: "uk" },
+      { name: "Romanian", code: "ro" },
+      { name: "Greek", code: "el" },
+      { name: "Czech", code: "cs" },
+      { name: "Swedish", code: "sv" },
+      { name: "Hungarian", code: "hu" },
+      { name: "Finnish", code: "fi" },
+      { name: "Danish", code: "da" },
+      { name: "Norwegian", code: "no" },
+      { name: "Vietnamese", code: "vi" },
+      { name: "Thai", code: "th" },
+      { name: "Hebrew", code: "he" },
+      { name: "Bengali", code: "bn" },
+      { name: "Malay", code: "ms" },
+      { name: "Malayalam", code: "ml" },
+      { name: "Tamil", code: "ta" },
+      { name: "Telugu", code: "te" },
+      { name: "Gujarati", code: "gu" },
+      { name: "Punjabi", code: "pa" },
+      { name: "Marathi", code: "mr" },
+      { name: "Slovak", code: "sk" },
+      { name: "Catalan", code: "ca" },
+      { name: "Bulgarian", code: "bg" },
+      { name: "Croatian", code: "hr" },
+      { name: "Serbian", code: "sr" },
+      { name: "Bosnian", code: "bs" },
+      { name: "Estonian", code: "et" },
+      { name: "Latvian", code: "lv" },
+      { name: "Lithuanian", code: "lt" },
+      { name: "Macedonian", code: "mk" },
+      { name: "Basque", code: "eu" },
+      { name: "Galician", code: "gl" },
+      { name: "Icelandic", code: "is" },
+      { name: "Irish", code: "ga" },
+      { name: "Welsh", code: "cy" },
+      { name: "Albanian", code: "sq" },
+      { name: "Georgian", code: "ka" },
+      { name: "Armenian", code: "hy" },
+      { name: "Azerbaijani", code: "az" },
+      { name: "Kazakh", code: "kk" },
+      { name: "Uzbek", code: "uz" },
+      { name: "Turkmen", code: "tk" },
+      { name: "Tajik", code: "tg" },
+      { name: "Mongolian", code: "mn" },
+      { name: "Pushto", code: "ps" },
+      { name: "Nepali", code: "ne" },
+      { name: "Khmer", code: "km" },
+      { name: "Lao", code: "lo" },
+      { name: "Sinhalese", code: "si" },
+      { name: "Haitian Creole", code: "ht" },
+      { name: "Swahili", code: "sw" },
+      { name: "Zulu", code: "zu" },
+      { name: "Afrikaans", code: "af" },
+      { name: "Yiddish", code: "yi" },
+      { name: "Esperanto", code: "eo" },
+      { name: "Sesotho", code: "st" },
+      { name: "Tigrinya", code: "ti" },
+      { name: "Somali", code: "so" },
+      { name: "Maltese", code: "mt" },
+      { name: "Hmong", code: "hmn" },
+      { name: "Twi", code: "ak" },
+      { name: "Burmese", code: "my" },
+      { name: "Finnish", code: "fi" },
+      { name: "Chinese (Hong Kong)", code: "zh-HK" },
+      { name: "Bashkir", code: "ba" },
+      { name: "Tatar", code: "tt" },
+      { name: "Hausa", code: "ha" },
+      { name: "Javanese", code: "jv" },
+      { name: "Quechua", code: "qu" },
+      { name: "Mayan languages", code: "yua" }
+    ];
 
-        // Filter languages based on search input
-        function filterLanguages(query, targetResults) {
-            const filteredLanguages = languages.filter(lang => lang.name.toLowerCase().includes(query.toLowerCase()));
-            targetResults.innerHTML = "";
-            filteredLanguages.forEach(lang => {
-                const li = document.createElement("li");
-                li.textContent = lang.name;
-                li.dataset.value = lang.code;
-                li.onclick = () => {
-                    targetResults.classList.remove("active");
-                    inputTextElem.focus();
-                    if (targetResults === inputResults) {
-                        inputSearch.value = lang.name;
-                    } else {
-                        outputSearch.value = lang.name;
-                    }
-                };
-                targetResults.appendChild(li);
-            });
-            targetResults.classList.add("active");
-        }
+    const inputSearch = document.getElementById("input-search");
+    const outputSearch = document.getElementById("output-search");
+    const inputResults = document.getElementById("input-results");
+    const outputResults = document.getElementById("output-results");
+    const inputTextElem = document.getElementById("input-text");
+    const outputTextElem = document.getElementById("output-text");
+    const translateButton = document.getElementById("translate-btn");
 
-        // Event listeners for search input
-        inputSearch.addEventListener("input", () => {
-            filterLanguages(inputSearch.value, inputResults);
+    // Filter languages based on search input
+    function filterLanguages(query, targetResults) {
+      const filteredLanguages = languages.filter(lang =>
+        lang.name.toLowerCase().includes(query.toLowerCase())
+      );
+      targetResults.innerHTML = "";
+      filteredLanguages.forEach(lang => {
+        const li = document.createElement("li");
+        li.textContent = lang.name;
+        li.dataset.value = lang.code;
+        li.onclick = () => {
+          targetResults.classList.remove("active");
+          inputTextElem.focus();
+          if (targetResults === inputResults) {
+            inputSearch.value = lang.name;
+          } else {
+            outputSearch.value = lang.name;
+          }
+          // Trigger live translation if there is input text
+          if (inputTextElem.value.trim() !== "") {
+            translate();
+          }
+        };
+        targetResults.appendChild(li);
+      });
+      targetResults.classList.add("active");
+    }
+
+    // Event listeners for search input
+    inputSearch.addEventListener("input", () => {
+      filterLanguages(inputSearch.value, inputResults);
+    });
+
+    outputSearch.addEventListener("input", () => {
+      filterLanguages(outputSearch.value, outputResults);
+    });
+
+    // Close dropdown if clicked outside
+    document.addEventListener("click", (e) => {
+      if (!e.target.closest(".search-container")) {
+        inputResults.classList.remove("active");
+        outputResults.classList.remove("active");
+      }
+    });
+
+    // Translate function
+    function translate() {
+      const inputText = inputTextElem.value;
+      const inputLanguage =
+        languages.find(lang => lang.name === inputSearch.value)?.code || "auto";
+      const outputLanguage =
+        languages.find(lang => lang.name === outputSearch.value)?.code || "en";
+      const url = `https://translate.googleapis.com/translate_a/single?client=gtx&sl=${inputLanguage}&tl=${outputLanguage}&dt=t&q=${encodeURIComponent(
+        inputText
+      )}`;
+
+      fetch(url)
+        .then(response => {
+          if (!response.ok)
+            throw new Error("Network response was not ok");
+          return response.json();
+        })
+        .then(json => {
+          outputTextElem.value = json[0].map(item => item[0]).join("");
+        })
+        .catch(error => {
+          console.error(error);
+          outputTextElem.value = "An error occurred during translation.";
         });
+    }
 
-        outputSearch.addEventListener("input", () => {
-            filterLanguages(outputSearch.value, outputResults);
-        });
+    // Debounce timer for live translation
+    let debounceTimer;
+inputTextElem.addEventListener("input", () => {
+  if (debounceTimer) clearTimeout(debounceTimer);
+  debounceTimer = setTimeout(() => {
+    if (inputTextElem.value.trim() !== "") {
+      translate();
+    } else {
+      outputTextElem.value = "";
+    }
+  }, 86); // Lowered from 500ms to 300ms
+});
 
-        // Close dropdown if clicked outside
-        document.addEventListener("click", (e) => {
-            if (!e.target.closest(".search-container")) {
-                inputResults.classList.remove("active");
-                outputResults.classList.remove("active");
-            }
-        });
 
-        // Translate function
-        function translate() {
-            const inputText = inputTextElem.value;
-            const inputLanguage = languages.find(lang => lang.name === inputSearch.value)?.code || "auto";
-            const outputLanguage = languages.find(lang => lang.name === outputSearch.value)?.code || "en";
-            const url = `https://translate.googleapis.com/translate_a/single?client=gtx&sl=${inputLanguage}&tl=${outputLanguage}&dt=t&q=${encodeURIComponent(inputText)}`;
-            
-            fetch(url)
-                .then(response => {
-                    if (!response.ok) throw new Error("Network response was not ok");
-                    return response.json();
-                })
-                .then(json => {
-                    outputTextElem.value = json[0].map(item => item[0]).join("");
-                })
-                .catch(error => {
-                    console.error(error);
-                    outputTextElem.value = "An error occurred during translation.";
-                });
-        }
-
-        // Trigger translation when the button is clicked
-        translateButton.addEventListener("click", translate);
-
-        // Clear textareas and disable button on page load
-        window.addEventListener("load", () => {
-            inputTextElem.value = "";
-            outputTextElem.value = "";
-            translateButton.disabled = true;
-        });
-
-        // Enable/disable translate button based on input
-        inputTextElem.addEventListener("input", () => {
-            translateButton.disabled = inputTextElem.value.trim() === "";
-        });
-    </script>
+    // Clear textareas on page load
+    window.addEventListener("load", () => {
+      inputTextElem.value = "";
+      outputTextElem.value = "";
+    });
+  </script>
 </body>
 </html>
