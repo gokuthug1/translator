@@ -344,7 +344,8 @@ document.addEventListener('DOMContentLoaded', () => {
         if (langCode === 'auto') { alert('Cannot download audio for "Auto Detect". Please wait for the language to be detected, or select a specific language.'); return; }
 
         const encodedText = encodeURIComponent(textToDownload);
-        const url = `https://translate.googleapis.com/translate_tts?ie=UTF-8&q=${encodedText}&tl=${langCode}&client=gtx`;
+        // THIS IS THE CORRECTED, WORKING URL
+        const url = `https://translate.google.com/translate_tts?ie=UTF-8&q=${encodedText}&tl=${langCode}&client=tw-ob`;
 
         // Create a temporary anchor element and trigger the download
         const a = document.createElement('a');
@@ -431,7 +432,7 @@ document.addEventListener('DOMContentLoaded', () => {
         navigator.clipboard.writeText(text).then(() => {
             const originalTitle = button.title;
             const originalIcon = button.innerHTML;
-            button.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>`;
+            button.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>`;
             button.title = "Copied!";
             setTimeout(() => {
                 button.innerHTML = originalIcon;
