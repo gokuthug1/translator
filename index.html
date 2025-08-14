@@ -40,7 +40,7 @@
       display: flex;
       justify-content: center;
       align-items: flex-start;
-      gap: 1rem;
+      gap: 2rem; /* Increased gap slightly for better separation */
       width: 100%;
       max-width: 1100px;
     }
@@ -201,56 +201,16 @@
       color: var(--text-color-light);
     }
     
-    .swap-button-container {
-      display: flex;
-      align-items: center;
-      justify-content: center;
-    }
-
-    #swap-btn {
-      background-color: var(--card-bg-color);
-      border: 1px solid var(--border-color);
-      border-radius: 50%;
-      width: 40px;
-      height: 40px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      cursor: pointer;
-      color: var(--primary-color);
-      transition: background-color 0.2s, transform 0.2s, box-shadow 0.2s;
-    }
-
-    #swap-btn:hover {
-      background-color: var(--primary-color);
-      color: white;
-      transform: rotate(180deg);
-    }
-
-    #swap-btn:active {
-      transform: rotate(180deg) scale(0.95);
-    }
-
     @media (max-width: 900px) {
         .translator-container {
             flex-direction: column;
-            gap: 1rem;
+            gap: 1.5rem;
             align-items: center;
         }
         .card {
             width: 100%;
             max-width: 500px;
         }
-        .card.input-card { order: 0; }
-        .swap-button-container {
-            width: 100%;
-            max-width: 500px;
-            order: 1;
-        }
-        .card.output-card { order: 2; }
-        #swap-btn { transform: rotate(90deg); }
-        #swap-btn:hover { transform: rotate(270deg); }
-        #swap-btn:active { transform: rotate(270deg) scale(0.95); }
     }
   </style>
 </head>
@@ -283,13 +243,6 @@
           <div class="char-count" id="char-count">0 / 5000</div>
         </div>
       </div>
-    </div>
-
-    <!-- Swap Button -->
-    <div class="swap-button-container">
-      <button class="icon-btn" id="swap-btn" title="Swap languages">
-        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"></line><polyline points="19 12 12 19 5 12"></polyline></svg>
-      </button>
     </div>
 
     <!-- Output Card -->
@@ -349,7 +302,7 @@ document.addEventListener('DOMContentLoaded', () => {
         { name: "Norwegian", code: "no" }, { name: "Pashto", code: "ps" }, { name: "Polish", code: "pl" },
         { name: "Portuguese", code: "pt" }, { name: "Punjabi", code: "pa" }, { name: "Quechua", code: "qu" },
         { name: "Romanian", code: "ro" }, { name: "Russian", code: "ru" }, { name: "Serbian", code: "sr" },
-        { name: "Sesotho", code: "st" }, { name: "Sinhalese", code: "si" }, { name:á"Slovak", code: "sk" },
+        { name: "Sesotho", code: "st" }, { name: "Sinhalese", code: "si" }, { name: "Slovak", code: "sk" }, /* <-- SYNTAX ERROR FIXED HERE */
         { name: "Somali", code: "so" }, { name: "Spanish", code: "es" }, { name: "Swahili", code: "sw" },
         { name: "Swedish", code: "sv" }, { name: "Tajik", code: "tg" }, { name: "Tamil", code: "ta" },
         { name: "Tatar", code: "tt" }, { name: "Telugu", code: "te" }, { name: "Thai", code: "th" },
@@ -378,13 +331,11 @@ document.addEventListener('DOMContentLoaded', () => {
             speakBtn: document.getElementById('output-speak-btn'),
             copyBtn: document.getElementById('output-copy-btn'),
             downloadBtn: document.getElementById('output-download-btn'),
-        },
-        swapBtn: document.getElementById('swap-btn'),
+        }
     };
 
     // --- FUNCTIONS ---
     
-    /** Downloads audio of the given text using Google's TTS service */
     const downloadAudio = (text, langCode) => {
         const textToDownload = text.trim();
         if (!textToDownload) {
@@ -401,7 +352,6 @@ document.addEventListener('DOMContentLoaded', () => {
         }
 
         const encodedText = encodeURIComponent(textToDownload);
-        // THIS IS THE CORRECTED, WORKING URL
         const url = `https://translate.googleapis.com/translate_tts?ie=UTF-8&q=${encodedText}&tl=${langCode}&client=gtx`;
 
         const a = document.createElement('a');
@@ -412,7 +362,6 @@ document.addEventListener('DOMContentLoaded', () => {
         document.body.removeChild(a);
     };
 
-    /** Core translation function */
     const translate = async () => {
         const text = dom.input.text.value.trim();
         if (!text || (sourceLang === targetLang && sourceLang !== 'auto')) {
@@ -432,7 +381,6 @@ document.addEventListener('DOMContentLoaded', () => {
             
             const translatedText = data[0].map(item => item[0]).join('');
             dom.output.text.value = translatedText;
-            
             detectedSourceLang = data[2] || 'auto';
             
         } catch (error) {
@@ -445,7 +393,6 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     };
     
-    // (Other functions remain unchanged)
     const populateLanguageList = (listElement, availableLanguages, selectedCode) => {
         listElement.innerHTML = '';
         availableLanguages.forEach(lang => {
@@ -456,6 +403,7 @@ document.addEventListener('DOMContentLoaded', () => {
             listElement.appendChild(li);
         });
     };
+
     const setLanguage = (type, code) => {
         const lang = languages.find(l => l.code === code);
         if (!lang) return;
@@ -470,19 +418,14 @@ document.addEventListener('DOMContentLoaded', () => {
         }
         if (dom.input.text.value.trim()) translate();
     };
+
     const updateSelectedListItem = (list, code) => {
         const current = list.querySelector('.selected');
         if (current) current.classList.remove('selected');
         const newItem = list.querySelector(`[data-code="${code}"]`);
         if (newItem) newItem.classList.add('selected');
     };
-    const swapLanguages = () => {
-        if (sourceLang === 'auto') return;
-        [sourceLang, targetLang] = [targetLang, sourceLang];
-        [dom.input.text.value, dom.output.text.value] = [dom.output.text.value, dom.input.text.value];
-        setLanguage('input', sourceLang);
-        setLanguage('output', targetLang);
-    };
+
     const copyToClipboard = (text, button) => {
         if (!text) return;
         navigator.clipboard.writeText(text).then(() => {
@@ -496,6 +439,7 @@ document.addEventListener('DOMContentLoaded', () => {
             }, 1500);
         }).catch(err => console.error('Failed to copy text: ', err));
     };
+
     const speakText = (text, langCode) => {
         if (!text || !window.speechSynthesis) return;
         const langToSpeak = langCode === 'auto' ? detectedSourceLang : langCode;
@@ -535,7 +479,7 @@ document.addEventListener('DOMContentLoaded', () => {
         });
         searchEl.addEventListener('input', () => {
             const langs = (type === 'input') ? languages : languages.filter(l => l.code !== 'auto');
-            filterAndDisplayLanguages(searchEl.value, listEl, langs, type === 'input' ? sourceLang : targetLang);
+            populateLanguageList(listEl, langs, type === 'input' ? sourceLang : targetLang);
         });
         listEl.addEventListener('click', (e) => {
             if (e.target.tagName === 'LI') {
@@ -553,7 +497,7 @@ document.addEventListener('DOMContentLoaded', () => {
             dom.output.langBox.classList.remove('active');
         }
     });
-    dom.swapBtn.addEventListener('click', swapLanguages);
+
     dom.input.copyBtn.addEventListener('click', () => copyToClipboard(dom.input.text.value, dom.input.copyBtn));
     dom.output.copyBtn.addEventListener('click', () => copyToClipboard(dom.output.text.value, dom.output.copyBtn));
     dom.input.speakBtn.addEventListener('click', () => speakText(dom.input.text.value, sourceLang));
