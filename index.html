@@ -336,7 +336,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // --- FUNCTIONS ---
     
-    const downloadAudio = (text, langCode) => {
+    /** Downloads audio using a more robust fetch/blob method */
+    const downloadAudio = async (text, langCode) => {
         const textToDownload = text.trim();
         if (!textToDownload) { alert('There is no text to download.'); return; }
         if (textToDownload.length > 200) { alert('Audio download is limited to 200 characters. Please select a shorter text.'); return; }
@@ -345,12 +346,26 @@ document.addEventListener('DOMContentLoaded', () => {
         const encodedText = encodeURIComponent(textToDownload);
         const url = `https://translate.googleapis.com/translate_tts?ie=UTF-8&q=${encodedText}&tl=${langCode}&client=gtx`;
 
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = `translation_${langCode}.mp3`;
-        document.body.appendChild(a);
-        a.click();
-        document.body.removeChild(a);
+        try {
+            const response = await fetch(url);
+            if (!response.ok) {
+                throw new Error(`Network response was not ok, status: ${response.status}`);
+            }
+            const blob = await response.blob();
+            const blobUrl = URL.createObjectURL(blob);
+
+            const a = document.createElement('a');
+            a.href = blobUrl;
+            a.download = `translation_${langCode}.mp3`;
+            document.body.appendChild(a);
+            a.click();
+            a.remove();
+            URL.revokeObjectURL(blobUrl);
+
+        } catch (error) {
+            console.error('Download failed:', error);
+            alert('Failed to download audio. The service may be temporarily unavailable or the request was blocked.');
+        }
     };
 
     const translate = async () => {
@@ -382,7 +397,7 @@ document.addEventListener('DOMContentLoaded', () => {
             dom.output.text.placeholder = 'Translation';
         }
     };
-
+    
     const populateLanguageList = (listElement, availableLanguages, selectedCode) => {
         listElement.innerHTML = '';
         availableLanguages.forEach(lang => {
@@ -479,7 +494,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
         searchEl.addEventListener('input', () => {
             const langs = (type === 'input') ? languages : languages.filter(l => l.code !== 'auto');
-            // CORRECTED FUNCTION CALL IS HERE
             filterAndDisplayLanguages(searchEl.value, listEl, langs, type === 'input' ? sourceLang : targetLang);
         });
 
