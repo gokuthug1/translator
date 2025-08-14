@@ -232,31 +232,25 @@
     }
 
     @media (max-width: 900px) {
-      .translator-container {
-        flex-direction: column;
-        gap: 1rem;
-        align-items: center;
-      }
-      .card {
-        width: 100%;
-        max-width: 500px;
-      }
-      .swap-button-container {
-        width: 100%;
-        max-width: 500px;
-        order: 1; /* Move swap button between cards */
-      }
-      #swap-btn {
-        transform: rotate(90deg);
-      }
-       #swap-btn:hover {
-        transform: rotate(270deg);
-      }
-      #swap-btn:active {
-        transform: rotate(270deg) scale(0.95);
-      }
-      .card.input-card { order: 0; }
-      .card.output-card { order: 2; }
+        .translator-container {
+            flex-direction: column;
+            gap: 1rem;
+            align-items: center;
+        }
+        .card {
+            width: 100%;
+            max-width: 500px;
+        }
+        .card.input-card { order: 0; }
+        .swap-button-container {
+            width: 100%;
+            max-width: 500px;
+            order: 1;
+        }
+        .card.output-card { order: 2; }
+        #swap-btn { transform: rotate(90deg); }
+        #swap-btn:hover { transform: rotate(270deg); }
+        #swap-btn:active { transform: rotate(270deg) scale(0.95); }
     }
   </style>
 </head>
@@ -281,6 +275,9 @@
             </button>
             <button class="icon-btn" id="input-copy-btn" title="Copy text">
               <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
+            </button>
+            <button class="icon-btn" id="input-download-btn" title="Download audio">
+              <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
             </button>
           </div>
           <div class="char-count" id="char-count">0 / 5000</div>
@@ -314,6 +311,9 @@
             <button class="icon-btn" id="output-copy-btn" title="Copy text">
               <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
             </button>
+            <button class="icon-btn" id="output-download-btn" title="Download audio">
+              <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
+            </button>
           </div>
         </div>
       </div>
@@ -325,6 +325,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // --- STATE & CONFIGURATION ---
     let sourceLang = 'auto';
     let targetLang = 'en';
+    let detectedSourceLang = 'auto'; // To store the language detected by the API
     let debounceTimer;
 
     const languages = [
@@ -366,6 +367,7 @@ document.addEventListener('DOMContentLoaded', () => {
             langList: document.getElementById('input-lang-list'),
             speakBtn: document.getElementById('input-speak-btn'),
             copyBtn: document.getElementById('input-copy-btn'),
+            downloadBtn: document.getElementById('input-download-btn'),
             charCount: document.getElementById('char-count'),
         },
         output: {
@@ -375,13 +377,75 @@ document.addEventListener('DOMContentLoaded', () => {
             langList: document.getElementById('output-lang-list'),
             speakBtn: document.getElementById('output-speak-btn'),
             copyBtn: document.getElementById('output-copy-btn'),
+            downloadBtn: document.getElementById('output-download-btn'),
         },
         swapBtn: document.getElementById('swap-btn'),
     };
 
     // --- FUNCTIONS ---
+    
+    /** Core translation function */
+    const translate = async () => {
+        const text = dom.input.text.value.trim();
+        if (!text || (sourceLang === targetLang && sourceLang !== 'auto')) {
+            dom.output.text.value = text;
+            detectedSourceLang = sourceLang; // Set detected lang even if not translating
+            return;
+        }
 
-    /** Populates a language dropdown with options */
+        dom.output.text.classList.add('loading');
+        dom.output.text.placeholder = 'Translating...';
+
+        try {
+            const url = `https://translate.googleapis.com/translate_a/single?client=gtx&sl=${sourceLang}&tl=${targetLang}&dt=t&q=${encodeURIComponent(text)}`;
+            const response = await fetch(url);
+            if (!response.ok) throw new Error('Network response was not ok');
+            const data = await response.json();
+            
+            const translatedText = data[0].map(item => item[0]).join('');
+            dom.output.text.value = translatedText;
+            
+            // Capture the detected source language from the API response
+            detectedSourceLang = data[2] || 'auto';
+            
+        } catch (error) {
+            console.error('Translation Error:', error);
+            dom.output.text.value = 'Error: Could not translate.';
+            detectedSourceLang = 'auto'; // Reset on error
+        } finally {
+            dom.output.text.classList.remove('loading');
+            dom.output.text.placeholder = 'Translation';
+        }
+    };
+    
+    /** Downloads audio of the given text using Google's TTS service */
+    const downloadAudio = (text, langCode) => {
+        if (!text) {
+            alert('There is no text to download.');
+            return;
+        }
+        if (text.length > 200) {
+            alert('Audio download is limited to 200 characters due to API limitations. Please select a shorter text.');
+            return;
+        }
+        if (langCode === 'auto') {
+             alert('Cannot download audio for "Auto Detect". Please wait for the language to be detected after typing, or select a specific language.');
+             return;
+        }
+
+        const encodedText = encodeURIComponent(text);
+        const url = `https://translate.google.com/translate_tts?ie=UTF-8&q=${encodedText}&tl=${langCode}&client=tw-ob`;
+
+        // Create a temporary anchor element to trigger the download
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `translation_${langCode}.mp3`; // Filename for the download
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+    };
+
+    // (Other functions like populateLanguageList, setLanguage, etc. remain the same)
     const populateLanguageList = (listElement, availableLanguages, selectedCode) => {
         listElement.innerHTML = '';
         availableLanguages.forEach(lang => {
@@ -394,8 +458,6 @@ document.addEventListener('DOMContentLoaded', () => {
             listElement.appendChild(li);
         });
     };
-
-    /** Filters and displays languages based on search query */
     const filterAndDisplayLanguages = (query, listElement, availableLanguages, selectedCode) => {
         const filtered = availableLanguages.filter(lang =>
             lang.name.toLowerCase().includes(query.toLowerCase())
@@ -403,12 +465,9 @@ document.addEventListener('DOMContentLoaded', () => {
         populateLanguageList(listElement, filtered, selectedCode);
         listElement.classList.add('active');
     };
-
-    /** Sets the selected language for input or output */
     const setLanguage = (type, code) => {
         const lang = languages.find(l => l.code === code);
         if (!lang) return;
-
         if (type === 'input') {
             sourceLang = code;
             dom.input.search.value = lang.name;
@@ -418,71 +477,23 @@ document.addEventListener('DOMContentLoaded', () => {
             dom.output.search.value = lang.name;
             updateSelectedListItem(dom.output.langList, code);
         }
-
         if (dom.input.text.value.trim()) {
             translate();
         }
     };
-    
-    /** Updates the 'selected' class on a list item */
     const updateSelectedListItem = (list, code) => {
         const currentlySelected = list.querySelector('.selected');
         if (currentlySelected) currentlySelected.classList.remove('selected');
         const newItem = list.querySelector(`[data-code="${code}"]`);
         if (newItem) newItem.classList.add('selected');
     };
-    
-    /** Core translation function */
-    const translate = async () => {
-        const text = dom.input.text.value.trim();
-        if (!text || sourceLang === targetLang) {
-            dom.output.text.value = text; // Copy text if langs are same
-            return;
-        }
-
-        dom.output.text.classList.add('loading');
-        dom.output.text.placeholder = 'Translating...';
-
-        try {
-            // Note: This uses an unofficial, rate-limited Google Translate API.
-            // For production use, a dedicated translation API service is recommended.
-            const url = `https://translate.googleapis.com/translate_a/single?client=gtx&sl=${sourceLang}&tl=${targetLang}&dt=t&q=${encodeURIComponent(text)}`;
-            const response = await fetch(url);
-            if (!response.ok) throw new Error('Network response was not ok');
-            const data = await response.json();
-            
-            // The API returns a nested array; we need to piece together the translation.
-            const translatedText = data[0].map(item => item[0]).join('');
-            dom.output.text.value = translatedText;
-            
-        } catch (error) {
-            console.error('Translation Error:', error);
-            dom.output.text.value = 'Error: Could not translate.';
-        } finally {
-            dom.output.text.classList.remove('loading');
-            dom.output.text.placeholder = 'Translation';
-        }
-    };
-
-    /** Swaps source and target languages and text */
     const swapLanguages = () => {
-        // Prevent swapping to 'auto' as a target language
         if (sourceLang === 'auto') return;
-
         [sourceLang, targetLang] = [targetLang, sourceLang];
         [dom.input.text.value, dom.output.text.value] = [dom.output.text.value, dom.input.text.value];
-        [dom.input.search.value, dom.output.search.value] = 
-            [languages.find(l => l.code === sourceLang).name, languages.find(l => l.code === targetLang).name];
-
-        updateSelectedListItem(dom.input.langList, sourceLang);
-        updateSelectedListItem(dom.output.langList, targetLang);
-        
-        if (dom.input.text.value.trim()) {
-            translate();
-        }
+        setLanguage('input', sourceLang);
+        setLanguage('output', targetLang);
     };
-
-    /** Copies text to the clipboard and provides user feedback */
     const copyToClipboard = (text, button) => {
         if (!text) return;
         navigator.clipboard.writeText(text).then(() => {
@@ -494,20 +505,15 @@ document.addEventListener('DOMContentLoaded', () => {
                 button.innerHTML = originalIcon;
                 button.title = originalTitle;
             }, 1500);
-        }).catch(err => {
-            console.error('Failed to copy text: ', err);
-            alert('Failed to copy text.');
-        });
+        }).catch(err => console.error('Failed to copy text: ', err));
     };
-    
-    /** Speaks text using the Web Speech API */
     const speakText = (text, langCode) => {
         if (!text || !window.speechSynthesis) return;
-        // The Web Speech API language code format can differ (e.g., 'en-US')
-        // We use the base code which works for most browsers/voices.
+        const langToSpeak = langCode === 'auto' ? detectedSourceLang : langCode;
+        if (langToSpeak === 'auto') return; // Don't speak if still auto
         const utterance = new SpeechSynthesisUtterance(text);
-        utterance.lang = langCode === 'auto' ? '' : langCode.split('-')[0];
-        speechSynthesis.cancel(); // Stop any previous speech
+        utterance.lang = langToSpeak.split('-')[0];
+        speechSynthesis.cancel();
         speechSynthesis.speak(utterance);
     };
 
@@ -518,41 +524,42 @@ document.addEventListener('DOMContentLoaded', () => {
         const count = dom.input.text.value.length;
         dom.input.charCount.textContent = `${count} / 5000`;
         
-        if (count > 5000) {
-            dom.input.text.value = dom.input.text.value.substring(0, 5000);
-        }
+        if (count > 5000) dom.input.text.value = dom.input.text.value.substring(0, 5000);
 
         clearTimeout(debounceTimer);
         debounceTimer = setTimeout(() => {
             if (dom.input.text.value.trim() === '') {
                 dom.output.text.value = '';
+                detectedSourceLang = 'auto'; // Reset
             } else {
                 translate();
             }
-        }, 300); // 300ms delay
+        }, 300);
     });
     
-    // Language search and selection
+    // Download button listeners
+    dom.input.downloadBtn.addEventListener('click', () => {
+        downloadAudio(dom.input.text.value, detectedSourceLang);
+    });
+    dom.output.downloadBtn.addEventListener('click', () => {
+        downloadAudio(dom.output.text.value, targetLang);
+    });
+
+    // (Other event listeners remain the same)
     ['input', 'output'].forEach(type => {
         const searchEl = dom[type].search;
         const listEl = dom[type].langList;
         const boxEl = dom[type].langBox;
-        
-        // Open dropdown on click/focus
         searchEl.addEventListener('focus', () => {
             const availableLangs = (type === 'input') ? languages : languages.filter(l => l.code !== 'auto');
             populateLanguageList(listEl, availableLangs, type === 'input' ? sourceLang : targetLang);
             listEl.classList.add('active');
             boxEl.classList.add('active');
         });
-
-        // Filter list on search input
         searchEl.addEventListener('input', () => {
             const availableLangs = (type === 'input') ? languages : languages.filter(l => l.code !== 'auto');
             filterAndDisplayLanguages(searchEl.value, listEl, availableLangs, type === 'input' ? sourceLang : targetLang);
         });
-
-        // Handle language selection from list (using event delegation)
         listEl.addEventListener('click', (e) => {
             if (e.target.tagName === 'LI') {
                 setLanguage(type, e.target.dataset.code);
@@ -561,8 +568,6 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         });
     });
-
-    // Close dropdowns when clicking outside
     document.addEventListener('click', (e) => {
         if (!e.target.closest('.language-selector')) {
             dom.input.langList.classList.remove('active');
@@ -571,8 +576,6 @@ document.addEventListener('DOMContentLoaded', () => {
             dom.output.langBox.classList.remove('active');
         }
     });
-
-    // Swap, copy, and speak button listeners
     dom.swapBtn.addEventListener('click', swapLanguages);
     dom.input.copyBtn.addEventListener('click', () => copyToClipboard(dom.input.text.value, dom.input.copyBtn));
     dom.output.copyBtn.addEventListener('click', () => copyToClipboard(dom.output.text.value, dom.output.copyBtn));
@@ -581,20 +584,14 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // --- INITIALIZATION ---
     const initialize = () => {
-        // Sort languages alphabetically, keeping "Auto Detect" at the top
         const autoDetect = languages.shift();
         languages.sort((a, b) => a.name.localeCompare(b.name));
         languages.unshift(autoDetect);
-
-        // Populate lists initially (hidden)
         const outputLangs = languages.filter(l => l.code !== 'auto');
         populateLanguageList(dom.input.langList, languages, sourceLang);
         populateLanguageList(dom.output.langList, outputLangs, targetLang);
-        
-        // Set default display values
         setLanguage('input', 'auto');
         setLanguage('output', 'en');
-        
         dom.input.text.value = '';
         dom.output.text.value = '';
     };
