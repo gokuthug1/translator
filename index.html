@@ -40,7 +40,7 @@
       display: flex;
       justify-content: center;
       align-items: flex-start;
-      gap: 2rem; /* Increased gap slightly for better separation */
+      gap: 2rem;
       width: 100%;
       max-width: 1100px;
     }
@@ -302,7 +302,7 @@ document.addEventListener('DOMContentLoaded', () => {
         { name: "Norwegian", code: "no" }, { name: "Pashto", code: "ps" }, { name: "Polish", code: "pl" },
         { name: "Portuguese", code: "pt" }, { name: "Punjabi", code: "pa" }, { name: "Quechua", code: "qu" },
         { name: "Romanian", code: "ro" }, { name: "Russian", code: "ru" }, { name: "Serbian", code: "sr" },
-        { name: "Sesotho", code: "st" }, { name: "Sinhalese", code: "si" }, { name: "Slovak", code: "sk" }, /* <-- SYNTAX ERROR FIXED HERE */
+        { name: "Sesotho", code: "st" }, { name: "Sinhalese", code: "si" }, { name: "Slovak", code: "sk" },
         { name: "Somali", code: "so" }, { name: "Spanish", code: "es" }, { name: "Swahili", code: "sw" },
         { name: "Swedish", code: "sv" }, { name: "Tajik", code: "tg" }, { name: "Tamil", code: "ta" },
         { name: "Tatar", code: "tt" }, { name: "Telugu", code: "te" }, { name: "Thai", code: "th" },
@@ -338,18 +338,9 @@ document.addEventListener('DOMContentLoaded', () => {
     
     const downloadAudio = (text, langCode) => {
         const textToDownload = text.trim();
-        if (!textToDownload) {
-            alert('There is no text to download.');
-            return;
-        }
-        if (textToDownload.length > 200) {
-            alert('Audio download is limited to 200 characters. Please select a shorter text.');
-            return;
-        }
-        if (langCode === 'auto') {
-             alert('Cannot download audio for "Auto Detect". Please wait for the language to be detected, or select a specific language.');
-             return;
-        }
+        if (!textToDownload) { alert('There is no text to download.'); return; }
+        if (textToDownload.length > 200) { alert('Audio download is limited to 200 characters. Please select a shorter text.'); return; }
+        if (langCode === 'auto') { alert('Cannot download audio for "Auto Detect". Please wait for the language to be detected, or select a specific language.'); return; }
 
         const encodedText = encodeURIComponent(textToDownload);
         const url = `https://translate.googleapis.com/translate_tts?ie=UTF-8&q=${encodedText}&tl=${langCode}&client=gtx`;
@@ -379,8 +370,7 @@ document.addEventListener('DOMContentLoaded', () => {
             if (!response.ok) throw new Error('Network response was not ok');
             const data = await response.json();
             
-            const translatedText = data[0].map(item => item[0]).join('');
-            dom.output.text.value = translatedText;
+            dom.output.text.value = data[0].map(item => item[0]).join('');
             detectedSourceLang = data[2] || 'auto';
             
         } catch (error) {
@@ -392,7 +382,7 @@ document.addEventListener('DOMContentLoaded', () => {
             dom.output.text.placeholder = 'Translation';
         }
     };
-    
+
     const populateLanguageList = (listElement, availableLanguages, selectedCode) => {
         listElement.innerHTML = '';
         availableLanguages.forEach(lang => {
@@ -402,6 +392,14 @@ document.addEventListener('DOMContentLoaded', () => {
             if (lang.code === selectedCode) li.classList.add('selected');
             listElement.appendChild(li);
         });
+    };
+    
+    const filterAndDisplayLanguages = (query, listElement, availableLanguages, selectedCode) => {
+        const filtered = availableLanguages.filter(lang =>
+            lang.name.toLowerCase().includes(query.toLowerCase())
+        );
+        populateLanguageList(listElement, filtered, selectedCode);
+        listElement.classList.add('active');
     };
 
     const setLanguage = (type, code) => {
@@ -471,16 +469,20 @@ document.addEventListener('DOMContentLoaded', () => {
 
     ['input', 'output'].forEach(type => {
         const searchEl = dom[type].search, listEl = dom[type].langList, boxEl = dom[type].langBox;
+        
         searchEl.addEventListener('focus', () => {
             const langs = (type === 'input') ? languages : languages.filter(l => l.code !== 'auto');
             populateLanguageList(listEl, langs, type === 'input' ? sourceLang : targetLang);
             listEl.classList.add('active');
             boxEl.classList.add('active');
         });
+
         searchEl.addEventListener('input', () => {
             const langs = (type === 'input') ? languages : languages.filter(l => l.code !== 'auto');
-            populateLanguageList(listEl, langs, type === 'input' ? sourceLang : targetLang);
+            // CORRECTED FUNCTION CALL IS HERE
+            filterAndDisplayLanguages(searchEl.value, listEl, langs, type === 'input' ? sourceLang : targetLang);
         });
+
         listEl.addEventListener('click', (e) => {
             if (e.target.tagName === 'LI') {
                 setLanguage(type, e.target.dataset.code);
@@ -489,6 +491,7 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         });
     });
+
     document.addEventListener('click', (e) => {
         if (!e.target.closest('.language-selector')) {
             dom.input.langList.classList.remove('active');
