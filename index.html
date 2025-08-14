@@ -336,8 +336,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // --- FUNCTIONS ---
     
-    /** Downloads audio using a more robust fetch/blob method */
-    const downloadAudio = async (text, langCode) => {
+    /** Downloads audio by creating a temporary link to bypass CORS issues */
+    const downloadAudio = (text, langCode) => {
         const textToDownload = text.trim();
         if (!textToDownload) { alert('There is no text to download.'); return; }
         if (textToDownload.length > 200) { alert('Audio download is limited to 200 characters. Please select a shorter text.'); return; }
@@ -346,26 +346,13 @@ document.addEventListener('DOMContentLoaded', () => {
         const encodedText = encodeURIComponent(textToDownload);
         const url = `https://translate.googleapis.com/translate_tts?ie=UTF-8&q=${encodedText}&tl=${langCode}&client=gtx`;
 
-        try {
-            const response = await fetch(url);
-            if (!response.ok) {
-                throw new Error(`Network response was not ok, status: ${response.status}`);
-            }
-            const blob = await response.blob();
-            const blobUrl = URL.createObjectURL(blob);
-
-            const a = document.createElement('a');
-            a.href = blobUrl;
-            a.download = `translation_${langCode}.mp3`;
-            document.body.appendChild(a);
-            a.click();
-            a.remove();
-            URL.revokeObjectURL(blobUrl);
-
-        } catch (error) {
-            console.error('Download failed:', error);
-            alert('Failed to download audio. The service may be temporarily unavailable or the request was blocked.');
-        }
+        // Create a temporary anchor element and trigger the download
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `translation_${langCode}.mp3`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
     };
 
     const translate = async () => {
