@@ -344,7 +344,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if (langCode === 'auto') { alert('Cannot download audio for "Auto Detect". Please wait for the language to be detected, or select a specific language.'); return; }
 
         const encodedText = encodeURIComponent(textToDownload);
-        // THIS IS THE CORRECTED, WORKING URL
+        // FIX #1: THE CORRECT DOWNLOAD URL
         const url = `https://translate.google.com/translate_tts?ie=UTF-8&q=${encodedText}&tl=${langCode}&client=tw-ob`;
 
         // Create a temporary anchor element and trigger the download
@@ -481,6 +481,7 @@ document.addEventListener('DOMContentLoaded', () => {
         });
 
         searchEl.addEventListener('input', () => {
+            // FIX #2: THE CORRECT SEARCH FUNCTION CALL
             const langs = (type === 'input') ? languages : languages.filter(l => l.code !== 'auto');
             filterAndDisplayLanguages(searchEl.value, listEl, langs, type === 'input' ? sourceLang : targetLang);
         });
